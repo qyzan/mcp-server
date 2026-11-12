@@ -2,6 +2,9 @@ package net.portswigger.mcp
 
 import burp.api.montoya.BurpExtension
 import burp.api.montoya.MontoyaApi
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import net.portswigger.mcp.config.ConfigUi
 import net.portswigger.mcp.config.McpConfig
 import net.portswigger.mcp.providers.ClaudeDesktopProvider
@@ -18,6 +21,14 @@ class ExtensionBase : BurpExtension {
         val serverManager = KtorServerManager(api)
 
         val proxyJarManager = ProxyJarManager(api.logging())
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                proxyJarManager.refreshInstalledProxyJar()
+            } catch (e: Exception) {
+                api.logging().logToError("Could not update the installed proxy jar: ${e.message}")
+            }
+        }
 
         val configUi = ConfigUi(
             config = config, providers = listOf(
